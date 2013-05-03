@@ -53,7 +53,11 @@ dfprint <- function(df, printdigits = 2) {
 
 
 # Set period dates
-start_date <- Sys.Date() - weeks(12)
+# Go twelve weeks back from the next Monday - this helps ensure that
+# plotted weeks are full weeks. Otherwise, you might end up with just a Friday,
+# which makes a given week look really slow.
+next.seven <- seq(from = Sys.Date(), length.out = 7, by = "day")
+start_date <- next.seven[format(next.seven, "%A") %in% "Monday"] - weeks(12)
 stop_date <- Sys.Date()
 
 
