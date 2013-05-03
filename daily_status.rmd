@@ -26,7 +26,7 @@ opts_chunk$set(echo = FALSE,
                results = 'asis',
                message = FALSE,
                warning = FALSE,
-               fig.width = 8,
+               fig.width = 10,
                error = TRUE)
 
 
@@ -135,7 +135,7 @@ ggplot(visitagg, aes(x = week_date, y = n_visits, group = location, color = loca
     labs(x = "Visit Week", 
          y = "Number of visits",
          title = "Patient Visits by Location") +
-    theme_tb
+    theme_tb + theme(axis.text.x = element_text(angle = 70, hjust = 1.30, vjust = 1.3))
 
 
 
