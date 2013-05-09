@@ -53,8 +53,8 @@ dfprint <- function(df, printdigits = 2) {
 # Go twelve weeks back from the next Monday - this helps ensure that
 # plotted weeks are full weeks. Otherwise, you might end up with just a Friday,
 # which makes a given week look really slow.
-next.seven <- seq(from = Sys.Date(), length.out = 7, by = "day")
-start_date <- next.seven[format(next.seven, "%A") %in% "Monday"] - weeks(12)
+source("..//fun//get_prior_monday.r")
+start_date <- get_prior_monday(Sys.Date(), weeks.back = 12)
 stop_date <- Sys.Date()
 
 
@@ -111,7 +111,7 @@ locagg <- ddply(subset(visits, location %in% c("Clinic", "Outreach")),
                 .var = c("location", "visit_week"),
                 .fun = summarise,
                 n_visits = length(visit_date),
-                week_date = as.Date(min(visit_date, na.rm = TRUE))
+                week_date = get_prior_monday(as.Date(max(visit_date, na.rm = TRUE)))
 )
 
 
@@ -119,7 +119,7 @@ totals <- ddply(subset(visits, location %in% c("Clinic", "Outreach")),
                 .var = "visit_week",
                 .fun = summarise,
                 n_visits = length(visit_date),
-                week_date = as.Date(min(visit_date, na.rm = TRUE))
+                week_date = get_prior_monday(as.Date(max(visit_date, na.rm = TRUE)))
 )
 
 
@@ -177,13 +177,11 @@ tests$test_week <- format(tests$test_date, format = "%Y-%W")
 
 
 # Aggregate by week
-testagg <- count(tests, vars = c("test", "test_week"))
-
 testagg <- ddply(tests,
                 .var = c("test", "test_week"),
                 .fun = summarise,
                 freq = length(test_date),
-                week_date = as.Date(min(test_date, na.rm = TRUE))
+                week_date = get_prior_monday(as.Date(max(test_date, na.rm = TRUE)))
 )
 
 
