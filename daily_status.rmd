@@ -220,6 +220,51 @@ dfprint(tests_wide)
 
 ## Current Contact Investigations
 
+```{r investigations}
+
+# Summarize the open contact investigations
+investigations <- sqlQuery(plus, "
+                           
+    SELECT c.person_id, d.last_name, d.first_name,
+           c.date_opened, c.reason_for, c.priority, c.lead_investigator
+    FROM Contact_Investigation c LEFT OUTER JOIN Demos_View d
+    ON c.person_id = d.person_id
+    WHERE c.status = 'Open'
+                           
+")
+
+# Summarize the contacts themselves
+contacts <- sqlQuery(plus, "
+  
+    SELECT source_person_id, contact_person_id, priority, contact_status
+    FROM Contact
+                     
+")
+
+contact_sum <- ddply(contacts, .var = "source_person_id", .fun = summarise,
+                     n_contacts = length(contact_person_id),
+                     n_open = sum(contact_status %in% 1, na.rm = TRUE),
+                     priority_one = sum(priority %in% 3, na.rm = TRUE),
+                     priority_two = sum(priority %in% 2, na.rm = TRUE),
+                     priority_three = sum(priority %in% 1, na.rm = TRUE)
+)
+
+
+# Merge contact info onto investigation info
+invest_sum <- merge(x = investigations,
+                    y = contact_sum,
+                    by.x = "person_id",
+                    by.y = "source_person_id",
+                    all.x = TRUE)
+
+
+# Convert it all to character for better printing
+invest_print <- data.frame(lapply(invest_sum, as.character))
+
+dfprint(arrange(invest_print, lead_investigator, date_opened))
+
+```
+
 
 
 ## Patients currently receiving treatment for Active TB
