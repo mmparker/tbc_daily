@@ -70,11 +70,13 @@ theme_tb <- theme_bw() +
 
 # Set up the database connection
 if(interactive()) { 
-    plus <- odbcConnect("tbdbplus64") 
+    plus <- odbcConnect("tbdbplus64")
+    dbconnect <- "tbdbplus64"
 } else {
     plus <- odbcConnect("tbdbplus32")
+    dbconnect <- "tbdbplus32"
 }
-    
+
 
 
 
@@ -98,7 +100,8 @@ Updated at `r paste(Sys.time())`
 source("../Quarterly Strategic Area Review//R//fun/query_visits.r")
 
 visits <- query_visits(start_date = start_date,
-                       stop_date = stop_date)
+                       stop_date = stop_date,
+                       odbc = dbconnect)
 
 # Add a week indicator
 visits$visit_week <- format(visits$visit_date, format = "%Y-%W")
@@ -165,7 +168,8 @@ source("../Quarterly Strategic Area Review//R//fun/query_tests.r")
 
 # Query test results for the period
 tests <- query_tests(start_date = start_date,
-                     stop_date = stop_date)
+                     stop_date = stop_date,
+                       odbc = dbconnect)
 
 
 # Add a week indicator
