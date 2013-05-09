@@ -266,26 +266,103 @@ dfprint(arrange(invest_print, lead_investigator, date_opened))
 
 
 ## Patients currently receiving treatment for Active TB
+```{r active_tx}
+
+# Query open active treatment plans
+act_plans <- sqlQuery(plus, "
+                      
+    SELECT t.person_id, d.last_name, d.first_name, 
+           t.treat_plan, t.treat_plan_date, t.plan_author,
+           t.latest_tx, t.n_tx_completed
+    FROM Tx_Plan_View t LEFT OUTER JOIN Demos_view d
+    ON t.person_id = d.person_id
+    WHERE treat_plan_type = 'Active'
+        AND plan_status = 'Open'
+        AND author_affiliation = 'Denver Metro TB Clinic'
+        AND treat_plan_date > #2009-01-01#
+                      
+")
+
+dfprint(arrange(act_plans, plan_author, latest_tx))
 
 
-## Patients currently receiving treatment for LTBI
+```
 
 
 
-## Upcoming DOTs
+## Upcoming DOTs (Next Three Days)
+```{r upcoming_dots}
+
+# Query DOTs coming up in the next week
+dots <- sqlQuery(plus, "
+                 
+    SELECT t.person_id, d.last_name, d.first_name, t.treatment_date
+    FROM Drug_Treatment t LEFT OUTER JOIN Demos_View d
+    ON t.person_id = d.person_id
+    WHERE dispense_type IN ('DOT', 'DOPT')
+        AND t.treatment_date >= Date()
+        AND t.treatment_date <= Date() + 3
+                 
+")
+
+dfprint(arrange(dots, treatment_date, person_id))
+
+```
 
 
-## Upcoming LTBI Pickups
+## Upcoming LTBI Pickups (Next Seven Days)
+```{r upcoming_pickups}
+
+# Query pickups coming up in the next week
+pickups <- sqlQuery(plus, "
+                 
+    SELECT t.person_id, d.last_name, d.first_name, t.treatment_date
+    FROM Drug_Treatment t LEFT OUTER JOIN Demos_View d
+    ON t.person_id = d.person_id
+    WHERE dispense_type = 'Pickup'
+        AND t.treatment_date >= Date()
+        AND t.treatment_date <= Date() + 7
+                 
+")
+
+dfprint(arrange(pickups, treatment_date))
+
+```
+
 
 
 ## CXRs Awaiting Action
+```{r action_cxrs}
+
+# Query the CXRs with action required from TBdb
+action_cxrs <- sqlQuery(plus, "
+    
+    SELECT x.person_id, x.cxr_date_taken, x.cxr_date_read,
+           x.cxr_action_text, x.action_required
+    FROM CXR_View x LEFT OUTER JOIN TB_Case c
+    ON x.person_id = c.person_id
+    WHERE c.agency_id = 30
+        AND (x.action_required = 'Yes' OR x.action_required Is Null)
+    ORDER BY x.cxr_action_text, x.cxr_date_taken
+                         
+")
+
+# Convert cxr_date_taken to Date
+action_cxrs$cxr_date_taken <- as.Date(action_cxrs$cxr_date_taken)
+
+# There are a lot of CXRs with action_required = NA; we only need to address
+# those in the last year
+action_cxrs_recent <- subset(action_cxrs,
+                             subset = action_required %in% "Yes" |
+                                      (is.na(action_cxrs$action_required) & 
+                                      action_cxrs$cxr_date_taken >= (Sys.Date() - 365)),
+                             select = !names(action_cxrs) %in% "action_required"
+)
+
+dfprint(action_cxrs_recent)
 
 
-## Upcoming Eight-Week Sputa
-
-
-
-
+```
 
 
 
