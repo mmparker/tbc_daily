@@ -35,8 +35,9 @@ source("..//fun//dfprint.r")
 # Go twelve weeks back from the next Monday - this helps ensure that
 # plotted weeks are full weeks. Otherwise, you might end up with just a Friday,
 # which makes a given week look really slow.
-source("..//fun//get_prior_monday.r")
-start_date <- get_prior_monday(Sys.Date(), weeks.back = 12)
+# Obviously, the week in progress will always appear as a partial week.
+source("..//fun//get_week_start.r")
+start_date <- get_week_start(Sys.Date(), weeks.back = 11)
 stop_date <- Sys.Date()
 
 
@@ -93,7 +94,7 @@ locagg <- ddply(subset(visits, location %in% c("Clinic", "Outreach")),
                 .var = c("location", "visit_week"),
                 .fun = summarise,
                 n_visits = length(visit_date),
-                week_date = get_prior_monday(as.Date(max(visit_date, na.rm = TRUE)))
+                week_date = get_week_start(as.Date(max(visit_date, na.rm = TRUE)))
 )
 
 
@@ -101,7 +102,7 @@ totals <- ddply(subset(visits, location %in% c("Clinic", "Outreach")),
                 .var = "visit_week",
                 .fun = summarise,
                 n_visits = length(visit_date),
-                week_date = get_prior_monday(as.Date(max(visit_date, na.rm = TRUE)))
+                week_date = get_week_start(as.Date(max(visit_date, na.rm = TRUE)))
 )
 
 
@@ -131,7 +132,7 @@ ggplot(visitagg, aes(x = week_date, y = n_visits, group = location, color = loca
 ```{r, results='asis'}
 
 # Cast visits wide
-visits_wide <- dcast(visitagg, week_date ~ location, value.var = "n_visits")
+visits_wide <- dcast(visitagg, week_date ~ location, value.var = "n_visits", fun.agg = sum)
 
 # Pretty-print
 names(visits_wide) <- c("Visit Week", "Total Visits", "Clinic Visits", "Outreach Visits")
@@ -163,7 +164,7 @@ testagg <- ddply(tests,
                 .var = c("test", "test_week"),
                 .fun = summarise,
                 freq = length(test_date),
-                week_date = get_prior_monday(as.Date(max(test_date, na.rm = TRUE)))
+                week_date = get_week_start(as.Date(max(test_date, na.rm = TRUE)))
 )
 
 
