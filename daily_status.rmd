@@ -28,7 +28,7 @@ opts_chunk$set(echo = FALSE,
 
 
 # Source the data.frame pretty-printer
-source(file.path("..", "fun", "dfprint.r"))
+source(file.path("..", "fun", "dfprintif.r"))
 
 
 # Set period dates
@@ -36,7 +36,7 @@ source(file.path("..", "fun", "dfprint.r"))
 # plotted weeks are full weeks. Otherwise, you might end up with just a Friday,
 # which makes a given week look really slow.
 # Obviously, the week in progress will always appear as a partial week.
-soruce(file.path("..", "fun", "get_week_start.r"))
+source(file.path("..", "fun", "get_week_start.r"))
 
 start_date <- get_week_start(Sys.Date(), weeks.back = 11)
 stop_date <- Sys.Date()
@@ -138,7 +138,7 @@ visits_wide <- dcast(visitagg, week_date ~ location, value.var = "n_visits", fun
 # Pretty-print
 names(visits_wide) <- c("Visit Week", "Total Visits", "Clinic Visits", "Outreach Visits")
 
-dfprint(visits_wide)
+dfprintif(visits_wide)
 
 ```
 
@@ -194,7 +194,7 @@ tests_wide <- dcast(testagg, week_date ~ test, value.var = "freq")
 # Pretty-print
 names(tests_wide) <- c("Test Week", "CXRs", "QFTs", "TSTs")
 
-dfprint(tests_wide)
+dfprintif(tests_wide)
 
 ```
 
@@ -241,9 +241,11 @@ invest_sum <- merge(x = investigations,
 
 
 # Convert it all to character for better printing
-invest_print <- data.frame(lapply(invest_sum, as.character))
+invest_print <- arrange(data.frame(lapply(invest_sum, as.character)), 
+                        lead_investigator, date_opened)
 
-dfprint(arrange(invest_print, lead_investigator, date_opened))
+dfprintif(invest_print,
+          norowmsg = "It appears that there are no open contact investigations at this time.")
 
 ```
 
@@ -267,7 +269,9 @@ act_plans <- sqlQuery(plus, "
                       
 ")
 
-dfprint(arrange(act_plans, plan_author, latest_tx))
+
+dfprintif(arrange(act_plans, plan_author, latest_tx),
+          norowmsg = "It appears that there are no patients receiving treatment for active TB at this time.")
 
 
 ```
@@ -289,7 +293,9 @@ dots <- sqlQuery(plus, "
                  
 ")
 
-dfprint(arrange(dots, treatment_date, person_id))
+
+dfprintif(arrange(dots, treatment_date, person_id),
+          norowmsg = "It appears that there are no upcoming DOTs at this time.")
 
 ```
 
@@ -309,7 +315,9 @@ pickups <- sqlQuery(plus, "
                  
 ")
 
-dfprint(arrange(pickups, treatment_date))
+
+dfprintif(arrange(pickups, treatment_date),
+          norowmsg = "It appears that there are no upcoming LTBI pickups at this time.")
 
 ```
 
@@ -343,8 +351,11 @@ action_cxrs_recent <- subset(action_cxrs,
                              select = !names(action_cxrs) %in% "action_required"
 )
 
-dfprint(action_cxrs_recent)
 
+
+
+dfprintif(action_cxrs_recent, 
+          norowmsg = "It appears that there are no upcoming LTBI pickups at this time.")
 
 ```
 
