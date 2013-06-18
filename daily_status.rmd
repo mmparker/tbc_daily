@@ -28,7 +28,7 @@ opts_chunk$set(echo = FALSE,
 
 
 # Source the data.frame pretty-printer
-source("..//fun//dfprint.r")
+source(file.path("..", "fun", "dfprint.r"))
 
 
 # Set period dates
@@ -36,7 +36,8 @@ source("..//fun//dfprint.r")
 # plotted weeks are full weeks. Otherwise, you might end up with just a Friday,
 # which makes a given week look really slow.
 # Obviously, the week in progress will always appear as a partial week.
-source("..//fun//get_week_start.r")
+soruce(file.path("..", "fun", "get_week_start.r"))
+
 start_date <- get_week_start(Sys.Date(), weeks.back = 11)
 stop_date <- Sys.Date()
 
