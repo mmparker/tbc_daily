@@ -8,7 +8,7 @@ options(stringsAsFactors = FALSE)
 
 # Load the required libraries
 library(knitr)
-library(xtable)
+library(mpmisc)
 library(RODBC)
 library(plyr)
 library(ggplot2)
@@ -16,6 +16,7 @@ library(scales)
 library(gridExtra)
 library(lubridate)
 library(reshape2)
+
 
 
 # Set default chunk options
@@ -27,8 +28,6 @@ opts_chunk$set(echo = FALSE,
                error = TRUE)
 
 
-# Source the data.frame pretty-printer
-source(file.path("..", "fun", "dfprintif.r"))
 
 
 # Set period dates
@@ -36,7 +35,6 @@ source(file.path("..", "fun", "dfprintif.r"))
 # plotted weeks are full weeks. Otherwise, you might end up with just a Friday,
 # which makes a given week look really slow.
 # Obviously, the week in progress will always appear as a partial week.
-source(file.path("..", "fun", "get_week_start.r"))
 
 start_date <- get_week_start(Sys.Date(), weeks.back = 11)
 stop_date <- Sys.Date()
@@ -53,14 +51,15 @@ theme_tb <- theme_bw() +
 
 
 # Set up the database connection
+# One for the quarterly report functions, which take the odbc connection as a string
 if(interactive()) { 
-    plus <- odbcConnect("tbdbplus64")
     dbconnect <- "tbdbplus64"
 } else {
-    plus <- odbcConnect("tbdbplus32")
     dbconnect <- "tbdbplus32"
 }
 
+# Another for queries that will expect an actual ODBC connection object
+plus <- connect_to_tbdbplus()
 
 
 
