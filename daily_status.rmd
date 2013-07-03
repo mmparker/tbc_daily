@@ -270,6 +270,80 @@ dfprintif(action_cxrs_recent,
 <div id="treatment">
 
 
+## Patients Receiving Treatment
+```{r tx_plot}
+
+# Query all plans
+plans <- sqlQuery(plus, "
+                  
+    SELECT t.person_id, t.treat_plan_type,
+           t.treat_plan_date, t.treat_plan_end
+    FROM Tx_Plan_View t LEFT OUTER JOIN Demos_view d
+    ON t.person_id = d.person_id
+    WHERE author_affiliation = 'Denver Metro TB Clinic'
+        AND treat_plan_date > #2009-01-01#
+                      
+")
+
+
+# Over the last twelve weeks, how many people were on treatment?
+# For each week, I need to determine if a given treatment plan started before or during the week
+# and if it ended during or after the week
+# Get the Fridays of interest
+weeks <- data.frame(friday = get_week_start(Sys.Date(), start.day = "Friday", weeks.back = 0:10))
+
+# Get their corresponding Mondays
+weeks <- ddply(weeks, .var = "friday", .fun = summarise,
+    monday = get_week_start(friday, start.day = "Monday")
+)
+                    
+
+weeklytx <- ddply(weeks, .var = "monday", .fun = function(x) {
+    
+    xplans <- plans
+    
+    # Tag plans that started before or during the week, and those that ended during or after
+    xplans$start_bod <- with(xplans, as.Date(treat_plan_date) <= x$friday)
+    xplans$end_doa <- with(xplans, as.Date(treat_plan_end) >= x$monday)
+    
+    # Count all the plans that started before/during the week and ended during/after
+    weekplans <- subset(xplans, start_bod & end_doa)
+    
+    # Summarize and return
+    data.frame(n_active = sum(weekplans$treat_plan_type %in% "Active"),
+               n_ltbi = sum(weekplans$treat_plan_type %in% "LTBI"))
+
+})
+
+
+# Reshape it for plotting
+weeklytx.m <- melt(weeklytx, id.var = "monday", measure.var = c("n_active", "n_ltbi"))
+
+# Rename the variables
+weeklytx.m$variable <- as.character(weeklytx.m$variable)
+weeklytx.m$variable[weeklytx.m$variable %in% "n_active"] <- "Active Therapy"
+weeklytx.m$variable[weeklytx.m$variable %in% "n_ltbi"] <- "LTBI Therapy"
+
+
+# Plot it
+ggplot(weeklytx.m, aes(x = monday, y = value, group = variable, color = variable)) +
+    geom_point(size = point_size) +
+    geom_line(aes(linetype = variable), size = line_size) +
+    expand_limits(y = 0) +
+    scale_x_date(breaks = date_breaks("1 week")) +
+    scale_color_manual("Plan Type", values = colorwheel[1:3]) +
+    scale_linetype_discrete("Plan Type") +
+    labs(x = "Date", 
+         y = "Number of patients on treatment",
+         title = "Patients Being Treated for Active and Latent Tuberculosis") +
+    theme_tb + theme(axis.text.x = element_text(angle = 70, hjust = 1.30, vjust = 1.3))
+
+
+
+```
+
+
+
 
 ## Patients currently receiving treatment for Active TB
 ```{r active_tx}
