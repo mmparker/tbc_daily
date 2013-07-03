@@ -327,8 +327,8 @@ weeklytx.m <- melt(weeklytx, id.var = "monday", measure.var = c("n_active", "n_l
 
 # Rename the variables
 weeklytx.m$variable <- as.character(weeklytx.m$variable)
-weeklytx.m$variable[weeklytx.m$variable %in% "n_active"] <- "Active Therapy"
-weeklytx.m$variable[weeklytx.m$variable %in% "n_ltbi"] <- "LTBI Therapy"
+weeklytx.m$variable[weeklytx.m$variable %in% "n_active"] <- "Active"
+weeklytx.m$variable[weeklytx.m$variable %in% "n_ltbi"] <- "Latent"
 
 
 # Plot it
@@ -352,7 +352,7 @@ ggplot(weeklytx.m, aes(x = monday, y = value, group = variable, color = variable
 ```{r, results='asis'}
 
 # Pretty-print
-names(weeklytx) <- c("Week", "Pts on Active Tx", "Pts on LTBI Tx")
+names(weeklytx) <- c("Week", "Pts on Active Tx", "Pts on Latent Tx")
 
 dfprintif(weeklytx)
 
