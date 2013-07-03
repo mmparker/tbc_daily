@@ -1,6 +1,21 @@
 
 
 
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" type="text/css" href="../css/jquery-ui.css" />
+  <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+  <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+  <link rel="stylesheet" type="text/css" href="../css/tb_report.css" />
+  <script>
+  $(function() {
+    $( "#tabs" ).tabs();
+  });
+  </script>
+</head>
+
+
 ```{r setup, echo= FALSE, message=FALSE,warning= FALSE}
 
 # Strings ain't factors
@@ -73,7 +88,17 @@ plus <- connect_to_tbdbplus()
 # TB Clinic Daily Status Report
 Updated at `r paste(Sys.time())`
 
----------------------------------
+
+<div id="tabs">
+  <ul>
+    <li><a href="#visits">Visits</a></li>
+    <li><a href="#diagnostics">Diagnostics</a></li>
+    <li><a href="#treatment">Treatment</a></li>
+    <li><a href="#contacts">Contacts</a></li>
+  </ul>
+    
+
+  <div id="visits">
 
 ## Recent Clinic Visits
 
@@ -141,8 +166,11 @@ dfprintif(visits_wide)
 
 ```
 
+  </div>
 
--------------------------------------------
+
+  <div id="diagnostics">
+
 ## Recent Screenings
 ```{r screens}
 
@@ -199,54 +227,47 @@ dfprintif(tests_wide)
 
 
 
-## Current Contact Investigations
 
-```{r investigations}
+## CXRs Awaiting Action
+```{r action_cxrs}
 
-# Summarize the open contact investigations
-investigations <- sqlQuery(plus, "
-                           
-    SELECT c.person_id, d.last_name, d.first_name,
-           c.date_opened, c.reason_for, c.priority, c.lead_investigator
-    FROM Contact_Investigation c LEFT OUTER JOIN Demos_View d
-    ON c.person_id = d.person_id
-    WHERE c.status = 'Open'
-                           
+# Query the CXRs with action required from TBdb
+action_cxrs <- sqlQuery(plus, "
+    
+    SELECT x.person_id, x.cxr_date_taken, x.cxr_date_read,
+           x.cxr_action_text, x.action_required
+    FROM CXR_View x LEFT OUTER JOIN TB_Case c
+    ON x.person_id = c.person_id
+    WHERE c.agency_id = 30
+        AND (x.action_required = 'Yes' OR x.action_required Is Null)
+    ORDER BY x.cxr_action_text, x.cxr_date_taken
+                         
 ")
 
-# Summarize the contacts themselves
-contacts <- sqlQuery(plus, "
-  
-    SELECT source_person_id, contact_person_id, priority, contact_status
-    FROM Contact
-                     
-")
+# Convert cxr_date_taken to Date
+action_cxrs$cxr_date_taken <- as.Date(action_cxrs$cxr_date_taken)
 
-contact_sum <- ddply(contacts, .var = "source_person_id", .fun = summarise,
-                     n_contacts = length(contact_person_id),
-                     n_open = sum(contact_status %in% 1, na.rm = TRUE),
-                     priority_one = sum(priority %in% 3, na.rm = TRUE),
-                     priority_two = sum(priority %in% 2, na.rm = TRUE),
-                     priority_three = sum(priority %in% 1, na.rm = TRUE)
+# There are a lot of CXRs with action_required = NA; we only need to address
+# those in the last year
+action_cxrs_recent <- subset(action_cxrs,
+                             subset = action_required %in% "Yes" |
+                                      (is.na(action_cxrs$action_required) & 
+                                      action_cxrs$cxr_date_taken >= (Sys.Date() - 365)),
+                             select = !names(action_cxrs) %in% "action_required"
 )
 
 
-# Merge contact info onto investigation info
-invest_sum <- merge(x = investigations,
-                    y = contact_sum,
-                    by.x = "person_id",
-                    by.y = "source_person_id",
-                    all.x = TRUE)
 
 
-# Convert it all to character for better printing
-invest_print <- arrange(data.frame(lapply(invest_sum, as.character)), 
-                        lead_investigator, date_opened)
-
-dfprintif(invest_print,
-          norowmsg = "It appears that there are no open contact investigations at this time.")
+dfprintif(action_cxrs_recent, 
+          norowmsg = "It appears that there are no upcoming LTBI pickups at this time.")
 
 ```
+
+  </div>
+
+
+<div id="treatment">
 
 
 
@@ -322,42 +343,72 @@ dfprintif(arrange(pickups, treatment_date),
 
 
 
-## CXRs Awaiting Action
-```{r action_cxrs}
 
-# Query the CXRs with action required from TBdb
-action_cxrs <- sqlQuery(plus, "
-    
-    SELECT x.person_id, x.cxr_date_taken, x.cxr_date_read,
-           x.cxr_action_text, x.action_required
-    FROM CXR_View x LEFT OUTER JOIN TB_Case c
-    ON x.person_id = c.person_id
-    WHERE c.agency_id = 30
-        AND (x.action_required = 'Yes' OR x.action_required Is Null)
-    ORDER BY x.cxr_action_text, x.cxr_date_taken
-                         
+
+
+
+
+
+
+<div id="contacts">
+
+
+## Current Contact Investigations
+
+```{r investigations}
+
+# Summarize the open contact investigations
+investigations <- sqlQuery(plus, "
+                           
+    SELECT c.person_id, d.last_name, d.first_name,
+           c.date_opened, c.reason_for, c.priority, c.lead_investigator
+    FROM Contact_Investigation c LEFT OUTER JOIN Demos_View d
+    ON c.person_id = d.person_id
+    WHERE c.status = 'Open'
+                           
 ")
 
-# Convert cxr_date_taken to Date
-action_cxrs$cxr_date_taken <- as.Date(action_cxrs$cxr_date_taken)
+# Summarize the contacts themselves
+contacts <- sqlQuery(plus, "
+  
+    SELECT source_person_id, contact_person_id, priority, contact_status
+    FROM Contact
+                     
+")
 
-# There are a lot of CXRs with action_required = NA; we only need to address
-# those in the last year
-action_cxrs_recent <- subset(action_cxrs,
-                             subset = action_required %in% "Yes" |
-                                      (is.na(action_cxrs$action_required) & 
-                                      action_cxrs$cxr_date_taken >= (Sys.Date() - 365)),
-                             select = !names(action_cxrs) %in% "action_required"
+contact_sum <- ddply(contacts, .var = "source_person_id", .fun = summarise,
+                     n_contacts = length(contact_person_id),
+                     n_open = sum(contact_status %in% 1, na.rm = TRUE),
+                     priority_one = sum(priority %in% 3, na.rm = TRUE),
+                     priority_two = sum(priority %in% 2, na.rm = TRUE),
+                     priority_three = sum(priority %in% 1, na.rm = TRUE)
 )
 
 
+# Merge contact info onto investigation info
+invest_sum <- merge(x = investigations,
+                    y = contact_sum,
+                    by.x = "person_id",
+                    by.y = "source_person_id",
+                    all.x = TRUE)
 
 
-dfprintif(action_cxrs_recent, 
-          norowmsg = "It appears that there are no upcoming LTBI pickups at this time.")
+# Convert it all to character for better printing
+invest_print <- arrange(data.frame(lapply(invest_sum, as.character)), 
+                        lead_investigator, date_opened)
+
+dfprintif(invest_print,
+          norowmsg = "It appears that there are no open contact investigations at this time.")
 
 ```
 
+
+
+
+  </div>
+
+
+</div>
 
 
 
