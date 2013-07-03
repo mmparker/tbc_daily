@@ -302,9 +302,15 @@ weeklytx <- ddply(weeks, .var = "monday", .fun = function(x) {
     
     xplans <- plans
     
-    # Tag plans that started before or during the week, and those that ended during or after
-    xplans$start_bod <- with(xplans, as.Date(treat_plan_date) <= x$friday)
-    xplans$end_doa <- with(xplans, as.Date(treat_plan_end) >= x$monday)
+    # Tag plans that started before or during the week, 
+    # and those that ended during or after (or are still in progress, of course)
+    xplans$start_bod <- with(xplans, 
+                             as.Date(treat_plan_date) <= x$friday
+    )
+    
+    xplans$end_doa <- with(xplans, 
+                           (as.Date(treat_plan_end) >= x$monday) | is.na(treat_plan_end)
+    )
     
     # Count all the plans that started before/during the week and ended during/after
     weekplans <- subset(xplans, start_bod & end_doa)
