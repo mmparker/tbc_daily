@@ -349,6 +349,14 @@ ggplot(weeklytx.m, aes(x = monday, y = value, group = variable, color = variable
 ```
 
 
+```{r, results='asis'}
+
+# Pretty-print
+names(weeklytx) <- c("Week", "Pts on Active Tx", "Pts on LTBI Tx")
+
+dfprintif(weeklytx)
+
+```
 
 
 ## Patients currently receiving treatment for Active TB
