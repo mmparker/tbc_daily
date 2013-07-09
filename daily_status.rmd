@@ -116,8 +116,7 @@ Updated at `r paste(Sys.time())`
 # TODO: Add a check for disease site
 rvct <- sqlQuery(plus, "
                  
-    SELECT r.person_id, p.last_name, p.first_name, p.date_of_birth,
-           r.therapystart, r.conversion, r.conversiondate
+    SELECT r.person_id, p.last_name, p.first_name, p.date_of_birth, r.therapystart
     FROM RVCT r LEFT OUTER JOIN Person p
     ON r.person_id = p.idnumber
     WHERE r.therapystart >= (Date() - 90)
@@ -128,20 +127,69 @@ rvct <- sqlQuery(plus, "
                  
 ")
 
-# Add a 60-days-after-tx-start indicator
-rvct$sixtydays <- as.Date(rvct$therapystart) + 60
 
-# Recode conversion status
-rvct$conversion[rvct$conversion %in% c(0, 2, 9)] <- "No"
-rvct$conversion[rvct$conversion %in% 1] <- "Yes"
+# Get their sputa results
+sputa <- sqlQuery(plus, paste("
+                  
+    SELECT person_id, collection_date, culture_status
+    FROM Culture
+    WHERE collection_date >= (Date() - 90)
+        AND specimen_source = '1'
+        AND person_id IN (",
+        paste(rvct$person_id, collapse = ", "),
+        ")",
+    sep = "")
+
+)
+
+
+
+# Mark the 52 to 60-day window for sputum collections
+rvct$sputwin52 <- as.Date(rvct$therapystart) + 52
+rvct$sputwin60 <- as.Date(rvct$therapystart) + 60
+
+
+
+# Identify whether patients have a sputum collected during that window
+rvctsput <- ddply(rvct, .var = "person_id", .fun = function(x) {
+    
+    # Do any of their documented sputa fall in the window?
+    xsput <- subset(sputa,
+                    subset = person_id %in% x$person_id &
+                             as.Date(collection_date) >= x$sputwin52 &
+                             as.Date(collection_date) <= x$sputwin60
+    )
+    
+    # Flag if a sputum was collected during the window, and if all sputa collected were negative
+    mutate(x,
+           anywindowsput = nrow(xsput) > 0,
+           windowsputneg = sum(xsput$culture_status %in% 2) %in% nrow(xsput) & nrow(xsput) > 0
+    )
+    
+})
+    
+    
+
+
+
+
+# Recode nwindowsput and windowsputneg
+rvctsput$anywindowsput[rvctsput$anywindowsput %in% FALSE] <- "No"
+rvctsput$anywindowsput[rvctsput$anywindowsput %in% TRUE] <- "Yes"
+
+rvctsput$windowsputneg[rvctsput$windowsputneg %in% FALSE] <- "No"
+rvctsput$windowsputneg[rvctsput$windowsputneg %in% TRUE] <- "Yes"
+
+
+
+
 
 # Pretty names
-names(rvct) <- c("TBdb ID", "Last Name", "First Name", "DOB", "Tx Start", 
-                 "Documented Sputum Conversion?", "Conversion Date", "60 Days After Tx Start")
+names(rvctsput) <- c("TBdb ID", "Last Name", "First Name", "DOB", "Tx Start", 
+                     "Sputum Window: 52 Days", "Sputum Window: 60 Days",
+                     "Sputum Collected During Window?", "Window Sputum All Negative?")
 
-dfprintif(rvct[ , c("TBdb ID", "Last Name", "First Name", "DOB", 
-                    "Tx Start", "60 Days After Tx Start",
-                    "Documented Sputum Conversion?")],
+dfprintif(rvctsput,
           norowmsg = "All culture-positive patients appear to have sputum conversions documented.")
 
 
