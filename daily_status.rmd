@@ -113,7 +113,6 @@ Updated at `r paste(Sys.time())`
 
 
 # Query the RVCT
-# TODO: Add a check for disease site
 rvct <- sqlQuery(plus, "
                  
     SELECT r.person_id, p.last_name, p.first_name, p.date_of_birth, r.therapystart
@@ -123,6 +122,7 @@ rvct <- sqlQuery(plus, "
         AND r.alive = 1
         AND r.reportingcountyid IN ('01', '03', '07', '08', '09', '17', '19')
         AND r.verification = 1
+        AND (r.diseasesite1 = 1 OR r.diseasesite2 = 1 OR r.diseasesite3 = 1)
     ORDER BY r.therapystart
                  
 ")
@@ -187,7 +187,7 @@ rvctsput$windowsputneg[rvctsput$windowsputneg %in% TRUE] <- "Yes"
 # Pretty names
 names(rvctsput) <- c("TBdb ID", "Last Name", "First Name", "DOB", "Tx Start", 
                      "Sputum Window: 52 Days", "Sputum Window: 60 Days",
-                     "Sputum Collected During Window?", "Window Sputum All Negative?")
+                     "Sputum Collected During Window?", "Window Sputa All Negative?")
 
 dfprintif(rvctsput,
           norowmsg = "All culture-positive patients appear to have sputum conversions documented.")
