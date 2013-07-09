@@ -105,6 +105,49 @@ Updated at `r paste(Sys.time())`
 
 ## Patients Requiring 60-Day Sputa
 
+```{r sputa}
+
+# NTIP criteria: TB patients with positive sputum culture results alive at diagnosis and have
+# initiated treatment, counted in the year of interest. Patients who died within 60 days of
+# initiating treatment are excluded. 
+
+
+# Query the RVCT
+# TODO: Add a check for disease site
+rvct <- sqlQuery(plus, "
+                 
+    SELECT r.person_id, p.last_name, p.first_name, p.date_of_birth,
+           r.therapystart, r.conversion, r.conversiondate
+    FROM RVCT r LEFT OUTER JOIN Person p
+    ON r.person_id = p.idnumber
+    WHERE r.therapystart >= (Date() - 90)
+        AND r.alive = 1
+        AND r.reportingcountyid IN ('01', '03', '07', '08', '09', '17', '19')
+        AND r.verification = 1
+    ORDER BY r.therapystart
+                 
+")
+
+# Add a 60-days-after-tx-start indicator
+rvct$sixtydays <- as.Date(rvct$therapystart) + 60
+
+# Recode conversion status
+rvct$conversion[rvct$conversion %in% c(0, 2, 9)] <- "No"
+rvct$conversion[rvct$conversion %in% 1] <- "Yes"
+
+# Pretty names
+names(rvct) <- c("TBdb ID", "Last Name", "First Name", "DOB", "Tx Start", 
+                 "Documented Sputum Conversion?", "Conversion Date", "60 Days After Tx Start")
+
+dfprintif(rvct[ , c("TBdb ID", "Last Name", "First Name", "DOB", 
+                    "Tx Start", "60 Days After Tx Start",
+                    "Documented Sputum Conversion?")],
+          norowmsg = "All culture-positive patients appear to have sputum conversions documented.")
+
+
+
+```
+
 
 ## Missed LTBI Pickups in the Last 14 Days
 
