@@ -92,12 +92,52 @@ Updated at `r paste(Sys.time())`
 
 <div id="tabs">
   <ul>
+    <li><a href="#alerts">Alerts</a></li>
     <li><a href="#visits">Visits</a></li>
     <li><a href="#diagnostics">Diagnostics</a></li>
     <li><a href="#treatment">Treatment</a></li>
     <li><a href="#contacts">Contacts</a></li>
   </ul>
     
+
+
+  <div id="alerts">
+
+## Patients Requiring 60-Day Sputa
+
+
+## Missed LTBI Pickups in the Last 14 Days
+
+  ```{r missed_pickups}
+  
+  # Query the missed LTBI pickups from the last fourteen days
+  missed_pu <- sqlQuery(plus, paste("
+                                    
+      SELECT t.person_id, p.last_name, p.first_name, t.treatment_date
+      FROM Drug_Treatment t LEFT OUTER JOIN Person p
+      ON t.person_id = p.idnumber
+      WHERE dispense_type = 'Pickup'
+          AND completed = ''
+          AND treatment_date BETWEEN (Now() - 14) AND (Now() - 1)
+      ORDER BY treatment_date",
+                                    
+      sep = "")
+                        
+  )
+                                    
+  
+  dfprintif(missed_pu,
+            norowmsg = "No LTBI pickups have been missed.")
+  
+  
+  ```
+
+
+
+
+  </div>
+
+
 
   <div id="visits">
 
