@@ -221,14 +221,13 @@ dfprintif(rvctsput,
   # Get each individual's most recent treatment plan
   missed_plans <- sqlQuery(plus, "
   
-    SELECT person_id, plan_author, treat_plan_date
+    SELECT person_id, plan_author, author_affiliation, treat_plan_date
     FROM Tx_Plan_View
     ORDER BY person_id, treat_plan_date DESC
     
   ")
   
-  latest_author <- missed_plans[!duplicated(missed_plans$person_id), 
-                                c("person_id", "plan_author")]
+  latest_author <- missed_plans[!duplicated(missed_plans$person_id), ]
   
   
   # Merge the latest plan author onto the treatments
@@ -236,9 +235,15 @@ dfprintif(rvctsput,
                          y = latest_author,
                          by = "person_id",
                          all.x = TRUE)
+                         
+  # Print out only the DPH plans
+  missed_dph <- missed_author[missed_author$author_affiliation %in% "Denver Metro TB Clinic",
+                              c("person_id", "last_name", "first_name", 
+                                "treatment_date", "plan_author")]
                                     
   
-  dfprintif(missed_author,
+  
+  dfprintif(arrange(missed_dph, plan_author, treatment_date),
             norowmsg = "No LTBI pickups have been missed.")
   
   
