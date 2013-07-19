@@ -215,9 +215,30 @@ dfprintif(rvctsput,
       sep = "")
                         
   )
+  
+  
+  # Add treatment plan author
+  # Get each individual's most recent treatment plan
+  missed_plans <- sqlQuery(plus, "
+  
+    SELECT person_id, plan_author, treat_plan_date
+    FROM Tx_Plan_View
+    ORDER BY person_id, treat_plan_date DESC
+    
+  ")
+  
+  latest_author <- missed_plans[!duplicated(missed_plans$person_id), 
+                                c("person_id", "plan_author")]
+  
+  
+  # Merge the latest plan author onto the treatments
+  missed_author <- merge(x = missed_pu,
+                         y = latest_author,
+                         by = "person_id",
+                         all.x = TRUE)
                                     
   
-  dfprintif(missed_pu,
+  dfprintif(missed_author,
             norowmsg = "No LTBI pickups have been missed.")
   
   
