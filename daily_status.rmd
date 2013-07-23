@@ -67,14 +67,6 @@ theme_tb <- theme_bw() +
 
 
 # Set up the database connection
-# One for the quarterly report functions, which take the odbc connection as a string
-if(interactive()) { 
-    dbconnect <- "tbdbplus64"
-} else {
-    dbconnect <- "tbdbplus32"
-}
-
-# Another for queries that will expect an actual ODBC connection object
 plus <- connect_to_tbdbplus()
 
 
@@ -273,7 +265,7 @@ source("../Quarterly Strategic Area Review//R//fun/query_visits.r")
 
 visits <- query_visits(start_date = start_date,
                        stop_date = stop_date,
-                       odbc = dbconnect)
+                       odbc = plus)
 
 # Add a week indicator
 visits$visit_week <- format(visits$visit_date, format = "%Y-%W")
@@ -344,7 +336,7 @@ source("../Quarterly Strategic Area Review//R//fun/query_tests.r")
 # Query test results for the period
 tests <- query_tests(start_date = start_date,
                      stop_date = stop_date,
-                       odbc = dbconnect)
+                       odbc = plus)
 
 
 # Add a week indicator
