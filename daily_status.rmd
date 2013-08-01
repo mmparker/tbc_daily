@@ -221,7 +221,8 @@ dfprintif(rvctsput,
   # Get each individual's most recent treatment plan
   missed_plans <- sqlQuery(plus, "
   
-    SELECT person_id, plan_author, author_affiliation, treat_plan_date
+    SELECT person_id, case_manager, case_manager_affiliation,
+           plan_author, author_affiliation, treat_plan_date
     FROM Tx_Plan_View
     ORDER BY person_id, treat_plan_date DESC
     
@@ -236,14 +237,15 @@ dfprintif(rvctsput,
                          by = "person_id",
                          all.x = TRUE)
                          
-  # Print out only the DPH plans
-  missed_dph <- missed_author[missed_author$author_affiliation %in% "Denver Metro TB Clinic",
+  # Print out only plans with a DPH author or case manager
+  missed_dph <- missed_author[missed_author$author_affiliation %in% "Denver Metro TB Clinic" |
+                              missed_author$case_manager_affiliation %in% "Denver Metro TB Clinic",
                               c("person_id", "last_name", "first_name", 
-                                "treatment_date", "plan_author")]
+                                "treatment_date", "case_manager", "plan_author")]
                                     
   
   
-  dfprintif(arrange(missed_dph, plan_author, treatment_date),
+  dfprintif(arrange(missed_dph, case_manager, treatment_date),
             norowmsg = "No LTBI pickups have been missed.")
   
   
@@ -600,19 +602,21 @@ dfprintif(weeklytx)
 act_plans <- sqlQuery(plus, "
                       
     SELECT t.person_id, d.last_name, d.first_name, 
-           t.treat_plan, t.treat_plan_date, t.plan_author,
+           t.treat_plan, t.treat_plan_date, 
+           t.case_manager,
            t.latest_tx, t.n_tx_completed
     FROM Tx_Plan_View t LEFT OUTER JOIN Demos_view d
     ON t.person_id = d.person_id
-    WHERE treat_plan_type = 'Active'
-        AND plan_status = 'Open'
-        AND author_affiliation = 'Denver Metro TB Clinic'
-        AND treat_plan_date > #2009-01-01#
+    WHERE t.treat_plan_type = 'Active'
+        AND t.plan_status = 'Open'
+        AND (t.author_affiliation = 'Denver Metro TB Clinic'
+             OR t.case_manager_affiliation = 'Denver Metro TB Clinic')
+        AND t.treat_plan_date > #2009-01-01#
                       
 ")
 
 
-dfprintif(arrange(act_plans, plan_author, latest_tx),
+dfprintif(arrange(act_plans, case_manager, latest_tx),
           norowmsg = "It appears that there are no patients receiving treatment for active TB at this time.")
 
 
