@@ -257,11 +257,11 @@ dfprintif(rvctsput,
 
 
 
-## Active Cases Over the Last Two Years
 
 
   <div id="cases">
   
+## Active Cases Over the Last Two Years
   
 ```{r cases}
 source("../Quarterly Strategic Area Review/R/fun/query_actives.r")
