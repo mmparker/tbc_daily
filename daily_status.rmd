@@ -209,7 +209,7 @@ past_pu <- sqlQuery(plus, "
     FROM Drug_Treatment t LEFT OUTER JOIN Person p
     ON t.person_id = p.idnumber
     WHERE dispense_type = 'Pickup'
-        AND treatment_date BETWEEN (Now() - 30) AND (Now() - 1)
+        AND treatment_date BETWEEN (Now() - 14) AND (Now() - 1)
     ORDER BY person_id, treatment_date DESC
                       
 ")
