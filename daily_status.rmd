@@ -189,7 +189,7 @@ names(rvctsput) <- c("TBdb ID", "Last Name", "First Name", "DOB", "Tx Start",
                      "Sputum Window: 52 Days", "Sputum Window: 60 Days",
                      "Sputum Collected During Window?", "Window Sputa All Negative?")
 
-dfprintif(rvctsput,
+dfprintif(arrange(rvctsput, `Sputum Window: 52 Days`),
           norowmsg = "All culture-positive patients appear to have sputum conversions documented.")
 
 
