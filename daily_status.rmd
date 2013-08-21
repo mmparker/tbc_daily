@@ -322,13 +322,25 @@ actives_print <- ddply(metroactives, .var = "plot_qtr", .fun = summarise,
                        metro = total - denver,
                        denverprop = as.integer(denver / total * 100)
 )
-                       
+
+
+# Add an annually-cumulative case count
+actives_print$year <- substr(actives_print$plot_qtr, 1, 4)
+
+actives_cumul <- ddply(actives_print, .var = "year", .fun = mutate,
+                       total_cumul = cumsum(total)
+)
+
+# Reorder columns
+actives_cumul <- actives_cumul[ , c("plot_qtr", "total", "total_cumul",
+                                    "denver", "metro", "denverprop")]
+
 
 # Print it with nice names
-names(actives_print) <- c("Year", "Total Cases", "Denver", "Other Metro Counties",
-                          "% Denver")
+names(actives_cumul) <- c("Quarter", "Total Cases","Cumulative Cases by Year",
+                          "Denver", "Other Metro Counties", "% Denver")
 
-dfprintif(actives_print)
+dfprintif(actives_cumul)
 
 
 ```
