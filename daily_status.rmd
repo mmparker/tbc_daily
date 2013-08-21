@@ -272,16 +272,14 @@ dfprintif(arrange(missed_dph, case_manager, treatment_date),
 ## Active Cases Over the Last Two Years
   
 ```{r cases}
-source("../Quarterly Strategic Area Review/R/fun/query_actives.r")
-
 
 # Get active cases over the last two years.
 # Ensure that the oldest year is a full year
-actives <- query_actives(start_date = as.Date(paste(as.numeric(format(Sys.Date(), "%Y")) - 2,
-                                                    "-01-01", 
-                                                    sep = "")),
-                         stop_date = Sys.Date(),
-                         odbc = plus)
+actives <- query_actives(
+    start_date = as.Date(paste(as.numeric(format(Sys.Date(), "%Y")) - 2,
+                               "-01-01", 
+                               sep = "")),
+    stop_date = Sys.Date())
 
 metroactives <- subset(actives, metro_case %in% 'True')
 
@@ -347,11 +345,8 @@ dfprintif(actives_print)
 ```{r visits}
 
 
-source("../Quarterly Strategic Area Review//R//fun/query_visits.r")
-
 visits <- query_visits(start_date = start_date,
-                       stop_date = stop_date,
-                       odbc = plus)
+                       stop_date = stop_date)
 
 # Add a week indicator
 visits$visit_week <- format(visits$visit_date, format = "%Y-%W")
@@ -416,13 +411,9 @@ dfprintif(visits_wide)
 ## Recent Screenings
 ```{r screens}
 
-# Load the function
-source("../Quarterly Strategic Area Review//R//fun/query_tests.r")
-
 # Query test results for the period
 tests <- query_tests(start_date = start_date,
-                     stop_date = stop_date,
-                       odbc = plus)
+                     stop_date = stop_date)
 
 
 # Add a week indicator
@@ -516,16 +507,7 @@ dfprintif(action_cxrs_recent,
 ```{r tx_plot}
 
 # Query all plans
-plans <- sqlQuery(plus, "
-                  
-    SELECT t.person_id, t.treat_plan_type,
-           t.treat_plan_date, t.treat_plan_end
-    FROM Tx_Plan_View t LEFT OUTER JOIN Demos_view d
-    ON t.person_id = d.person_id
-    WHERE author_affiliation = 'Denver Metro TB Clinic'
-        AND treat_plan_date > #2009-01-01#
-                      
-")
+plans <- query_tx_plans(start_date = as.Date("2009-01-01"))
 
 
 # Over the last twelve weeks, how many people were on treatment?
