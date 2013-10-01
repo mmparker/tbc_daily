@@ -526,13 +526,13 @@ plans <- query_tx_plans(start_date = as.Date("2009-01-01"))
 # For each week, I need to determine if a given treatment plan started before or during the week
 # and if it ended during or after the week
 # Get the Fridays of interest
-weeks <- data.frame(friday = get_week_start(Sys.Date(), start.day = "Friday", weeks.back = 0:10))
+weeks <- data.frame(friday = get_week_start(Sys.Date(), 
+                                            start.day = "Friday", 
+                                            weeks.back = 0:10))
 
 # Get their corresponding Mondays
-weeks <- ddply(weeks, .var = "friday", .fun = summarise,
-    monday = get_week_start(friday, start.day = "Monday")
-)
-                    
+weeks$monday <- get_week_start(weeks$friday, start.day = "Monday")
+                
 
 weeklytx <- ddply(weeks, .var = "monday", .fun = function(x) {
     
