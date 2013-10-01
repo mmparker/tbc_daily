@@ -736,8 +736,8 @@ contact.tests <- rbind(contact.tsts[ , c("person_id", "test_date", "test", "resu
 contact.tests$test_week <- format(contact.tests$test_date, "%Y-%W")
 
 contact.testagg <- ddply(contact.tests, .var = "test_week", .fun = summarise,
-                         freq = length(test_date),
-                         week_date = get_week_start(as.Date(max(test_date, na.rm = TRUE)))
+    freq = length(test_date),
+    week_date = get_week_start(as.Date(max(test_date, na.rm = TRUE)))
 )
 
 
@@ -757,6 +757,7 @@ ggplot(contact.testagg, aes(x = week_date, y = freq)) +
 ```
 
 
+
 ```{r contacttable, results = 'asis'}
 
 
@@ -764,6 +765,89 @@ ggplot(contact.testagg, aes(x = week_date, y = freq)) +
 names(contact.testagg) <- c("test_week", "Number of Contacts Tested", "Week")
 
 dfprintif(contact.testagg[ , c("Week", "Number of Contacts Tested")])
+
+```
+
+
+
+
+
+## Percent of Identified Contacts Who Have Been Evaluated
+### (Draft Plot - Do Not Use)
+
+
+```{r contactevals}
+
+# Get the contacts
+# Obviously, contacts in the last month or so can't be expected to
+# have been 100% evaluated yet - offset a bit
+offset.weeks <- 5
+
+contact.evals <- sqlQuery(plus, paste("
+
+    SELECT contact_person_id AS person_id, 
+           contact_status, priority, date_identified,
+           eval_date, date_closed 
+    FROM Contact
+    WHERE date_identified BETWEEN #",
+    start_date - (7 * offset.weeks),
+    "# AND #",
+    stop_date - (7 * offset.weeks),
+    "#",
+    sep = "")
+                         
+)
+
+
+# Convert date_identified to Date
+contact.evals$id_date <- as.Date(contact.evals$date_identified)
+
+
+# Aggregate by date identified
+contact.evals$id_week <- format(contact.evals$id_date, "%Y-%W")
+
+
+# Make a factor of the weeks so that they'll plot properly
+id_week_levels <- with(contact.evals,
+    format(seq(from = min(id_date),
+           to = max(id_date),
+           by = "1 week"),
+           format = "%Y-%W")
+)
+
+contact.evals$id_week <- factor(contact.evals$id_week,
+                                levels = id_week_levels)
+
+
+contact.idagg <- ddply(contact.evals, 
+                       .var = "id_week", 
+                       .fun = summarise, 
+                       .drop = FALSE,
+
+    freq = length(id_date),
+    per.eval = sum(!is.na(eval_date)) /  freq,
+    week_date = get_week_start(as.Date(max(id_date, na.rm = TRUE)))
+
+)
+
+
+
+
+# Plot it
+ggplot(contact.idagg, aes(x = id_week, y = per.eval, group = 1)) +
+    geom_point(aes(size = freq), color = colorwheel[1]) +
+    geom_line(size = line_size, color = colorwheel[1]) +
+    expand_limits(y = c(0, 1)) +
+    scale_x_discrete(labels = contact.idagg$week_date) +
+    scale_y_continuous(labels = percent) +
+    scale_size_continuous("Total Contacts Identified", range = c(4, 10)) +
+    labs(x = "Week Identified", 
+         y = "Number of contacts identified",
+         title = "Percent of Contacts Evaluated") +
+    theme_tb + 
+    theme(axis.text.x = element_text(angle = 70, hjust = 1.30, vjust = 1.3))
+
+
 
 ```
 
