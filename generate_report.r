@@ -10,6 +10,10 @@ options(stringsAsFactors = FALSE)
 library(knitr)
 library(markdown)
 
+# Set the working directory
+setwd("G:\\StrategicArea\\TB_Program\\Administration\\Reports\\Daily Status")
+
+
 # Knit it
 knit("daily_status.rmd")
 

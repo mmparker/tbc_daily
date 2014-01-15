@@ -161,10 +161,12 @@ rvctsput <- ddply(rvct, .var = "person_id", .fun = function(x) {
                              as.Date(collection_date) <= x$sputwin60
     )
     
-    # Flag if a sputum was collected during the window, and if all sputa collected were negative
+    # Flag if a sputum was collected during the window, 
+    # and if all sputa collected were negative
     mutate(x,
            anywindowsput = nrow(xsput) > 0,
-           windowsputneg = sum(xsput$culture_status %in% 2) %in% nrow(xsput) & nrow(xsput) > 0
+           windowsputneg = sum(xsput$culture_status %in% 2) %in% nrow(xsput) & 
+                           nrow(xsput) > 0
     )
     
 })
