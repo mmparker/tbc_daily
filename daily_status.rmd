@@ -430,8 +430,9 @@ tests <- query_tests(start_date = start_date,
                      stop_date = stop_date)
 
 
-# Add a week indicator
-tests$test_week <- format(tests$test_date, format = "%Y-%W")
+# Add a week indicator, using the Monday date of the test's week
+# That way, if January 1st is Friday, its week is still 2013-52, not 2014-00
+tests$test_week <- format(get_week_start(tests$test_date), format = "%Y-%W")
 
 
 # Aggregate by week
