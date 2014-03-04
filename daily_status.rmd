@@ -202,6 +202,8 @@ dfprintif(arrange(rvctsput, `Sputum Window: 52 Days`),
 
 ## Missed LTBI Pickups in the Last 14 Days
 
+If you actually used this, email Matt to have it turned back on!
+
 ```{r missed_pickups}
 
 
@@ -253,11 +255,90 @@ missed_dph <- missed_author[missed_author$author_affiliation %in% "Denver Metro 
                                   
 
 
-dfprintif(arrange(missed_dph, case_manager, treatment_date),
-          norowmsg = "No LTBI pickups have been missed.")
+#dfprintif(arrange(missed_dph, case_manager, treatment_date),
+#          norowmsg = "No LTBI pickups have been missed.")
 
 
 ```
+
+
+
+
+## Patients on Active Therapy with No DOT in 10 Days
+
+Patients below may be on self-administered therapy
+
+```{r late_tx_actives}
+
+
+actives_latest <- sqlQuery(plus, "
+                           
+    SELECT t.person_id, 
+           d.last_name,
+           d.first_name,
+           t.case_manager, 
+           t.treat_plan, 
+           t.latest_tx
+    FROM Tx_Plan_View t LEFT OUTER JOIN Demos_View d
+    ON t.person_id = d.person_id
+    WHERE plan_status = 'Open'
+        AND treat_plan_type = 'Active'
+        AND treat_plan_date > #2008-12-31#
+        AND case_manager_affiliation = 'Denver Metro TB Clinic'
+        AND (Date() - latest_tx) > 10
+    ORDER BY latest_tx
+    
+")
+
+names(actives_latest) <- c("TBdb ID", "Last Name", "First Name",
+                           "Case Manager", "Tx Plan", "Latest Tx")
+
+dfprintif(actives_latest,
+          norowmsg = "All active patients have received treatment within the last 10 days.")
+
+
+```
+
+
+
+
+
+
+## Patients on LTBI Therapy with No Pickup in 45 Days
+
+
+```{r late_tx_ltbi}
+
+
+ltbi_latest <- sqlQuery(plus, "
+                           
+    SELECT t.person_id, 
+           d.last_name,
+           d.first_name,
+           t.case_manager, 
+           t.ltbi_drug, 
+           t.latest_tx
+    FROM Tx_Plan_View t LEFT OUTER JOIN Demos_View d
+    ON t.person_id = d.person_id
+    WHERE plan_status = 'Open'
+        AND treat_plan_type = 'LTBI'
+        AND treat_plan_date > #2008-12-31#
+        AND case_manager_affiliation = 'Denver Metro TB Clinic'
+        AND (Date() - latest_tx) > 45
+    ORDER BY latest_tx
+    
+")
+
+
+names(ltbi_latest) <- c("TBdb ID", "Last Name", "First Name",
+                        "Case Manager", "Tx Plan", "Latest Tx")
+
+dfprintif(ltbi_latest,
+          norowmsg = "All active patients have received treatment within the last 10 days.")
+
+
+```
+
 
 
 
