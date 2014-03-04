@@ -627,52 +627,6 @@ dfprintif(arrange(act_plans, case_manager, latest_tx),
 
 
 
-## Upcoming DOTs (Next Three Days)
-```{r upcoming_dots}
-
-# Query DOTs coming up in the next week
-dots <- sqlQuery(plus, "
-                 
-    SELECT t.person_id, d.last_name, d.first_name, t.treatment_date
-    FROM Drug_Treatment t LEFT OUTER JOIN Demos_View d
-    ON t.person_id = d.person_id
-    WHERE dispense_type IN ('DOT', 'DOPT')
-        AND t.treatment_date >= Date()
-        AND t.treatment_date <= Date() + 3
-                 
-")
-
-
-dfprintif(arrange(dots, treatment_date, person_id),
-          norowmsg = "It appears that there are no upcoming DOTs at this time.")
-
-```
-
-
-## Upcoming LTBI Pickups (Next Seven Days)
-```{r upcoming_pickups}
-
-# Query pickups coming up in the next week
-pickups <- sqlQuery(plus, "
-                 
-    SELECT t.person_id, d.last_name, d.first_name, t.treatment_date
-    FROM Drug_Treatment t LEFT OUTER JOIN Demos_View d
-    ON t.person_id = d.person_id
-    WHERE dispense_type = 'Pickup'
-        AND t.treatment_date >= Date()
-        AND t.treatment_date <= Date() + 7
-                 
-")
-
-
-dfprintif(arrange(pickups, treatment_date),
-          norowmsg = "It appears that there are no upcoming LTBI pickups at this time.")
-
-```
-
-
-
-
 </div>
 
 
