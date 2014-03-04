@@ -440,8 +440,9 @@ dfprintif(actives_cumul)
 ```{r visits}
 
 
+# Query the visits - but don't pull this week's visits (they just look silly)
 visits <- query_visits(start_date = start_date,
-                       stop_date = stop_date)
+                       stop_date = get_week_start(stop_date) - 1)
 
 # Add a week indicator
 visits$visit_week <- format(visits$visit_date, format = "%Y-%W")
@@ -506,9 +507,9 @@ dfprintif(visits_wide)
 ## Recent Screenings
 ```{r screens}
 
-# Query test results for the period
+# Query test results for the period - but not this week's
 tests <- query_tests(start_date = start_date,
-                     stop_date = stop_date)
+                     stop_date = get_week_start(stop_date) - 1)
 
 
 # Add a week indicator, using the Monday date of the test's week
