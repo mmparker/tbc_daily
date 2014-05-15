@@ -200,9 +200,6 @@ dfprintif(arrange(rvctsput, `Sputum Window: 52 Days`),
 ```
 
 
-## Missed LTBI Pickups in the Last 14 Days
-
-If you actually used this, email Matt to have it turned back on!
 
 ```{r missed_pickups}
 
