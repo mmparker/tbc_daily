@@ -263,7 +263,6 @@ missed_dph <- missed_author[missed_author$author_affiliation %in% "Denver Metro 
 
 ## Patients on Active Therapy with No DOT in 10 Days
 
-Patients below may be on self-administered therapy
 
 ```{r late_tx_actives}
 
@@ -287,10 +286,35 @@ actives_latest <- sqlQuery(plus, "
     
 ")
 
-names(actives_latest) <- c("TBdb ID", "Last Name", "First Name",
+# Get each person's latest completed treatment to identify those on SAT
+actives_sat <- sqlQuery(plus, paste0(
+
+    "SELECT d.person_id, d.dispense_type
+     FROM Drug_Treatment d 
+     INNER JOIN (
+         SELECT person_id, MAX(treatment_date) AS latest_tx_date
+         FROM Drug_Treatment
+         GROUP BY person_id
+     ) AS maxdate
+     ON d.person_id = maxdate.person_id
+        AND d.treatment_date = maxdate.latest_tx_date
+     WHERE dispense_type IN ('Pickup', 'Packet')
+         AND d.person_id IN (",
+    paste(actives_latest$person_id, collapse = ', '),
+    ")"
+
+    )
+)
+
+
+# Exclude those on SAT
+missed_dot <- subset(actives_latest, !person_id %in% actives_sat$person_id)
+
+
+names(missed_dot) <- c("TBdb ID", "Last Name", "First Name",
                            "Case Manager", "Tx Plan", "Latest Tx")
 
-dfprintif(actives_latest,
+dfprintif(missed_dot,
           norowmsg = "All active patients have received treatment within the last 10 days.")
 
 
