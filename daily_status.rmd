@@ -314,7 +314,7 @@ missed_dot <- subset(actives_latest, !person_id %in% actives_sat$person_id)
 names(missed_dot) <- c("TBdb ID", "Last Name", "First Name",
                            "Case Manager", "Tx Plan", "Latest Tx")
 
-dfprintif(missed_dot,
+dfprintif(arrange(missed_dot, `Case Manager`, `Latest Tx`),
           norowmsg = "All active patients have received treatment within the last 10 days.")
 
 
@@ -354,7 +354,7 @@ ltbi_latest <- sqlQuery(plus, "
 names(ltbi_latest) <- c("TBdb ID", "Last Name", "First Name",
                         "Case Manager", "Tx Plan", "Latest Tx")
 
-dfprintif(ltbi_latest,
+dfprintif(arrange(ltbi_latest, `Case Manager`, `Latest Tx`),
           norowmsg = "All active patients have received treatment within the last 10 days.")
 
 
